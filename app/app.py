@@ -17,13 +17,14 @@ def add():
     a = float(data["a"])
     b = float(data["b"])
 
-    result = a - b  # BUG: should be a + b
+    # /add should add the operands
+    result = a + b
 
     return jsonify({
         "operation": "add",
         "a": a,
         "b": b,
-        "result": result
+        "result": result,
     })
 
 
