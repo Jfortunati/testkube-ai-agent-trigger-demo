@@ -1,44 +1,32 @@
-# Calculator API - Testkube Test Workflow
-#
-# This workflow:
-#   1. Spins up the calculator Flask app as a sidecar service
-#   2. Runs pytest API tests against it
-#   3. On failure, the Testkube AI Agent trigger fires and suggests a fix
-#
-# Before applying, replace YOUR_GIT_REPO_URL with your actual repo URL.
-# Apply with: kubectl apply -f testkube/test-workflow.yaml -n testkube
-
-apiVersion: testworkflows.testkube.io/v1
 kind: TestWorkflow
+apiVersion: testworkflows.testkube.io/v1
 metadata:
   name: calculator-api-tests
   namespace: testkube
   labels:
     demo: ai-agent-triggering
-
 spec:
-  # Clone repo into /data/repo for both the service and test steps
   content:
     git:
-      uri: YOUR_GIT_REPO_URL   # e.g. https://github.com/your-org/your-repo
+      uri: https://github.com/Jfortunati/testkube-ai-agent-trigger-demo.git
       revision: main
-
-  # ── Service: run the calculator app as a sidecar pod ──────────────────────
+      paths:
+      - tests
+  container:
+    workingDir: /data/repo/tests
+    image: python:3.11-slim
   services:
     app:
-      image: python:3.11-slim
       content:
         git:
-          uri: YOUR_GIT_REPO_URL
+          uri: https://github.com/Jfortunati/testkube-ai-agent-trigger-demo.git
           revision: main
           paths:
-            - app
-      command:
-        - sh
-        - -c
-        - |
-          pip install -r /data/repo/app/requirements.txt -q
-          python /data/repo/app/app.py
+          - app
+      image: python:3.11-slim
+      shell: |
+        pip install -r /data/repo/app/requirements.txt -q
+        python /data/repo/app/app.py
       readinessProbe:
         httpGet:
           path: /health
@@ -46,21 +34,18 @@ spec:
         initialDelaySeconds: 5
         periodSeconds: 2
         failureThreshold: 15
-
-  # ── Test execution container ───────────────────────────────────────────────
-  container:
-    image: python:3.11-slim
-    workingDir: /data/repo
-
-  # ── Steps ─────────────────────────────────────────────────────────────────
   steps:
-    - name: Install test dependencies
-      shell: pip install -r tests/requirements.txt -q
-
-    - name: Run calculator API tests
-      shell: pytest tests/ -v --tb=short
-      env:
-        - name: CALCULATOR_HOST
-          value: "{{ services.app.0.ip }}"
-        - name: CALCULATOR_PORT
-          value: "5000"
+  - name: Install test dependencies
+    shell: pip install -r ./requirements.txt -q
+  - name: Run calculator API tests
+    shell: python -m pytest ./ -v --tb=short
+    env:
+    - name: CALCULATOR_HOST
+      value: "{{ services.app.0.ip }}"
+    - name: CALCULATOR_PORT
+      value: "5000"
+status:
+  health:
+    passRate: 0
+    flipRate: 0
+    overallHealth: 0
