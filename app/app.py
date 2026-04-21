@@ -17,7 +17,8 @@ def add():
     a = float(data["a"])
     b = float(data["b"])
 
-    result = a - b  # BUG: should be a + b
+    # The /add endpoint must return the sum of operands.
+    result = a + b
 
     return jsonify({
         "operation": "add",
