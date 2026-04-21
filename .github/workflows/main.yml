@@ -1,6 +1,7 @@
 name: Trigger the 'calculator-api-tests' Test Workflow on Testkube
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
 
